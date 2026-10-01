@@ -185,7 +185,6 @@ form.grid .hint{font-weight:400;color:var(--muted);font-size:12px}
           <label>Alcance UE<input type="number" id="p-reach" min="0" step="1" placeholder="85000"><span class="hint">Alcance total en la UE del anuncio</span></label>
           <label>Anuncios activos<input type="number" id="p-ads" min="0" step="1" placeholder="30"><span class="hint">Anuncios activos de la tienda/producto</span></label>
           <label>Productos en la tienda<input type="number" id="p-store" min="0" step="1" placeholder="300"></label>
-          <label>Ranking en PPSpy<input type="number" id="p-rank" min="1" step="1" placeholder="20"><span class="hint">Posición del producto dentro de la tienda</span></label>
           <label>Palabra clave usada<input type="text" id="p-kw" placeholder="50% korting"></label>
           <label>URL de la tienda<input type="url" id="p-store-url" placeholder="https://…"></label>
           <label>URL del anuncio<input type="url" id="p-ad-url" placeholder="https://www.facebook.com/ads/library/?id=…"></label>
@@ -239,14 +238,14 @@ form.grid .hint{font-weight:400;color:var(--muted);font-size:12px}
           <h3>Activo poco tiempo · menos de 7 días</h3>
           <table class="rule-tbl">
             <tr><th>Condición</th><th>Mínimo</th></tr>
-            <tr><td>Productos en la tienda</td><td>150</td></tr>
-            <tr><td>Ranking PPSpy</td><td>top 15%</td></tr>
             <tr><td>Activo en la biblioteca</td><td>sí</td></tr>
+            <tr><td>Alcance según días</td><td>ver tabla</td></tr>
+            <tr><td>Productos en la tienda</td><td>150 (opcional)</td></tr>
           </table>
-          <p class="note" style="margin:0">Ejemplo: tienda con 300 productos, el producto debe estar en el top 45.</p>
+          <p class="note" style="margin:0">Sin PPSpy: el alcance por día decide si un producto nuevo despega.</p>
         </div>
         <div class="panel" style="background:var(--bg)">
-          <h3>Alcance opcional para productos nuevos</h3>
+          <h3>Alcance mínimo para productos nuevos</h3>
           <table class="rule-tbl">
             <tr><th>Días activo</th><th>Alcance</th></tr>
             <tr><td>3 días</td><td>15k</td></tr>
@@ -255,7 +254,7 @@ form.grid .hint{font-weight:400;color:var(--muted);font-size:12px}
             <tr><td>6 días</td><td>40k</td></tr>
             <tr><td>7 días</td><td>50k</td></tr>
           </table>
-          <p class="note" style="margin:0">Suma puntos a la puntuación, pero no bloquea el veredicto.</p>
+          <p class="note" style="margin:0">Por debajo de 3 días no hay datos suficientes: queda en vigilar.</p>
         </div>
       </div>
       <div class="panel" style="background:var(--bg)">
@@ -355,14 +354,11 @@ function evaluate(p){
     add("Anuncios activos ≥ 25", ads, 25, 1, true);
   } else {
     mode = "poco tiempo";
-    add("Tienda ≥ 150 productos", store, 150, 1, true);
-    if (store !== null && rank !== null) {
-      const top = Math.ceil(store * 0.15);
-      add("Top 15% PPSpy (≤ " + top + ")", rank, top, 1, true, true);
-    } else checks.push({label:"Top 15% PPSpy: sin dato", state:"na", ratio:0, weight:1, required:true});
     checks.push({label:"Activo en biblioteca", state: p.active === false ? "no" : "ok", ratio: p.active === false ? 0 : 1, weight:1, required:true});
     const rm = reachMin(days);
-    if (rm) add("Alcance opcional ≥ " + fmtK(rm), reach, rm, 1, false);
+    if (rm) add("Alcance ≥ " + fmtK(rm), reach, rm, 2, true);
+    else checks.push({label:"Menos de 3 días: aún sin datos", state:"na", ratio:0, weight:1, required:true});
+    if (store !== null) add("Tienda ≥ 150 productos", store, 150, 1, false);
   }
   if (p.active === false && mode !== "poco tiempo") checks.push({label:"Ya no está activo", state:"no", ratio:0, weight:1, required:true});
   const req = checks.filter(c => c.required);
@@ -537,7 +533,7 @@ function render(){
         <div class="metric"><span class="k">Alcance UE</span><span class="v">${fmtK(ev.reach)}</span></div>
         <div class="metric"><span class="k">Alcance/día</span><span class="v">${ev.vel ? fmtK(ev.vel) : "—"}</span></div>
         <div class="metric"><span class="k">Anuncios activos</span><span class="v">${num(r.activeAds) ?? "—"}</span></div>
-        <div class="metric"><span class="k">Tienda · PPSpy</span><span class="v">${num(r.storeProducts) ?? "—"} · #${num(r.ppspyRank) ?? "—"}</span></div>
+        <div class="metric"><span class="k">Productos tienda</span><span class="v">${num(r.storeProducts) ?? "—"}</span></div>
         <div class="metric"><span class="k">Modo</span><span class="v" style="font-family:var(--f-body)">${esc(ev.mode)}</span></div>
       </div>
       <div class="checks">${ev.checks.map(k => `<span class="check ${k.state}">${k.state === "ok" ? "✓" : k.state === "no" ? "✕" : "?"} ${esc(k.label)}</span>`).join("")}</div>
@@ -577,7 +573,7 @@ const F = ["name","country","start","reach","ads","store","rank","kw","store-url
 function formData(){
   return {
     name:$("p-name").value.trim(), country:$("p-country").value, startDate:$("p-start").value,
-    reach:num($("p-reach").value), activeAds:num($("p-ads").value), storeProducts:num($("p-store").value), ppspyRank:num($("p-rank").value),
+    reach:num($("p-reach").value), activeAds:num($("p-ads").value), storeProducts:num($("p-store").value), 
     keyword:$("p-kw").value.trim(), storeUrl:$("p-store-url").value.trim(), adUrl:$("p-ad-url").value.trim(),
     notes:$("p-notes").value.trim(), active:$("p-active").checked
   };
@@ -588,7 +584,7 @@ function openForm(id){
   $("form-title").textContent = p ? "Actualizar: " + (p.name || "") : "Nuevo producto";
   $("p-name").value = p?.name || ""; $("p-country").value = p?.country || (fCountry !== "ALL" ? fCountry : bCountry);
   $("p-start").value = p?.startDate || ""; $("p-reach").value = p?.reach ?? ""; $("p-ads").value = p?.activeAds ?? "";
-  $("p-store").value = p?.storeProducts ?? ""; $("p-rank").value = p?.ppspyRank ?? ""; $("p-kw").value = p?.keyword || "";
+  $("p-store").value = p?.storeProducts ?? ""; $("p-kw").value = p?.keyword || "";
   $("p-store-url").value = p?.storeUrl || ""; $("p-ad-url").value = p?.adUrl || ""; $("p-notes").value = p?.notes || "";
   $("p-active").checked = p ? p.active !== false : true;
   $("p-status").textContent = "";
