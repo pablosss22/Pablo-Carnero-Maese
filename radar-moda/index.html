@@ -1,0 +1,652 @@
+<title>Radar Moda EU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: herramienta de una columna — resumen + gráfico arriba, pestañas (Productos / Buscador / Reglas) debajo */
+:root{
+  --bg:#F2F3EF; --surface:#FFFFFF; --sunk:#E8EAE4; --fg:#15181A; --muted:#5E655F; --line:#D5D9D1;
+  --accent:#2944D6; --accent-ink:#FFFFFF; --accent-soft:#E3E8FC;
+  --win:#16794A; --win-soft:#DDF1E5; --warn:#A25F00; --warn-soft:#FBEBCB; --bad:#B2343A; --bad-soft:#F8DEDF;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#111413; --surface:#1A1E1C; --sunk:#232826; --fg:#E9ECE7; --muted:#9AA39C; --line:#2F3532;
+  --accent:#8EA2FF; --accent-ink:#0F1420; --accent-soft:#232B4D;
+  --win:#5ED394; --win-soft:#173325; --warn:#F2B45A; --warn-soft:#3A2B12; --bad:#F2858A; --bad-soft:#3D1D20; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#111413; --surface:#1A1E1C; --sunk:#232826; --fg:#E9ECE7; --muted:#9AA39C; --line:#2F3532;
+  --accent:#8EA2FF; --accent-ink:#0F1420; --accent-soft:#232B4D;
+  --win:#5ED394; --win-soft:#173325; --warn:#F2B45A; --warn-soft:#3A2B12; --bad:#F2858A; --bad-soft:#3D1D20; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:20px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4vw,40px);font-weight:700}
+h2{font-size:21px;font-weight:700}
+h3{font-size:16px;font-weight:700}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font:500 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header.top{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.season{display:inline-flex;gap:8px;align-items:center;background:var(--sunk);border-radius:999px;padding:6px 12px;font-size:13px}
+.season b{font-weight:600}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:4px}
+.stat .v{font:600 28px/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
+.stat.win .v{color:var(--win)} .stat.warn .v{color:var(--warn)} .stat.bad .v{color:var(--bad)}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px;min-width:0}
+.chart-head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:baseline}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chart-box{overflow-x:auto}
+#chart{display:block;width:100%;min-width:560px;height:auto}
+#chart text{font-family:var(--f-mono);font-size:11px;fill:var(--muted)}
+#chart .pt{cursor:pointer}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font-weight:600;color:var(--muted);white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+select,input[type=text],input[type=url],input[type=number],input[type=date],textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+.toolbar select{width:auto}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.spacer{flex:1}
+
+.list{display:grid;gap:10px}
+.card{border:1px solid var(--line);border-radius:10px;background:var(--surface);display:grid;grid-template-columns:6px minmax(0,1fr);overflow:hidden}
+.card .stripe{background:var(--muted)}
+.card.ganador .stripe{background:var(--win)} .card.vigilar .stripe{background:var(--warn)} .card.descartar .stripe{background:var(--bad)}
+.card .body{padding:14px 16px;display:grid;gap:10px;min-width:0}
+.card .row1{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.card .name{font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.pill{font:600 11px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:5px 9px}
+.pill.ganador{background:var(--win-soft);color:var(--win)} .pill.vigilar{background:var(--warn-soft);color:var(--warn)} .pill.descartar{background:var(--bad-soft);color:var(--bad)}
+.pill.ex{background:var(--sunk);color:var(--muted)}
+.pill.cc{background:var(--accent-soft);color:var(--accent)}
+.score{margin-left:auto;font:600 20px/1 var(--f-mono)}
+.score small{font-size:11px;color:var(--muted);font-weight:400}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px 16px}
+.metric{display:grid;gap:2px}
+.metric .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.metric .v{font:500 15px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.check{font-size:12.5px;border-radius:6px;padding:3px 8px;background:var(--sunk)}
+.check.ok{color:var(--win)} .check.no{color:var(--bad)} .check.na{color:var(--muted)}
+.card .actions{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.card .notes{font-size:13.5px;color:var(--muted);overflow-wrap:anywhere}
+
+.empty{border:1px dashed var(--line);border-radius:10px;padding:28px;text-align:center;display:grid;gap:8px;justify-items:center}
+
+form.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+form.grid label{display:grid;gap:4px;font-size:13px;font-weight:500}
+form.grid label.wide{grid-column:1/-1}
+form.grid .hint{font-weight:400;color:var(--muted);font-size:12px}
+.form-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.preview{grid-column:1/-1;background:var(--sunk);border-radius:8px;padding:10px 12px;font-size:13.5px}
+
+.kwgrid{display:grid;gap:8px}
+.kw{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.kw.done{background:var(--sunk)}
+.kw.done .q{color:var(--muted);text-decoration:line-through}
+.kw .q{font-family:var(--f-mono);font-size:14px;overflow-wrap:anywhere}
+.kw .cat{font-size:11px;color:var(--muted)}
+.kw input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+@media (max-width:520px){.kw{grid-template-columns:auto minmax(0,1fr)} .kw .kwbtns{grid-column:2;display:flex;gap:6px}}
+.kwbtns{display:contents}
+.kw-sec{display:grid;gap:8px}
+
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.rule-tbl{width:100%;border-collapse:collapse;font-size:14px}
+.rule-tbl td,.rule-tbl th{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left}
+.rule-tbl td:last-child,.rule-tbl th:last-child{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.note{font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;z-index:10}
+.status-line{font-size:12.5px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .15s}.card:hover{border-color:var(--muted)}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div style="display:grid;gap:6px">
+      <span class="eyebrow">Biblioteca de anuncios Meta · 8 países UE</span>
+      <h1>Radar Moda EU</h1>
+      <p class="muted" style="margin:0;max-width:62ch">Registra los productos de moda que encuentras en la biblioteca de anuncios. Cada producto se evalúa solo con tus reglas de días, alcance y anuncios activos, y los días se recalculan cada vez que abres la página.</p>
+    </div>
+    <span class="season" id="season"></span>
+  </header>
+
+  <section class="stats" aria-label="Resumen">
+    <div class="stat"><span class="eyebrow">Productos</span><span class="v" id="s-total">0</span></div>
+    <div class="stat win"><span class="eyebrow">Ganadores</span><span class="v" id="s-win">0</span></div>
+    <div class="stat warn"><span class="eyebrow">Vigilar</span><span class="v" id="s-warn">0</span></div>
+    <div class="stat bad"><span class="eyebrow">Descartados</span><span class="v" id="s-bad">0</span></div>
+  </section>
+
+  <section class="panel">
+    <div class="chart-head">
+      <div style="display:grid;gap:2px"><h2>Alcance frente a días activos</h2>
+      <span class="muted" style="font-size:13px">La línea marca el alcance mínimo de tus reglas para cada día. Los puntos por encima están en zona ganadora.</span></div>
+      <div class="legend"><span><i class="dot" style="background:var(--win)"></i>Ganador</span><span><i class="dot" style="background:var(--warn)"></i>Vigilar</span><span><i class="dot" style="background:var(--bad)"></i>Descartar</span></div>
+    </div>
+    <div class="chart-box"><svg id="chart" viewBox="0 0 760 300" role="img" aria-label="Gráfico de alcance por días activos"></svg></div>
+  </section>
+
+  <section class="panel">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-productos" aria-selected="true" data-tab="productos">Productos</button>
+      <button class="tab" role="tab" id="tab-buscador" aria-selected="false" data-tab="buscador">Buscador de anuncios</button>
+      <button class="tab" role="tab" id="tab-reglas" aria-selected="false" data-tab="reglas">Reglas</button>
+    </div>
+
+    <!-- PRODUCTOS -->
+    <div id="pane-productos" class="tabpane" style="display:grid;gap:14px">
+      <div class="toolbar">
+        <div class="chips" id="f-country"></div>
+        <span class="spacer"></span>
+        <select id="f-verdict" aria-label="Filtrar por veredicto">
+          <option value="all">Todos los veredictos</option>
+          <option value="ganador">Solo ganadores</option>
+          <option value="vigilar">Solo vigilar</option>
+          <option value="descartar">Solo descartados</option>
+        </select>
+        <select id="f-sort" aria-label="Ordenar">
+          <option value="score">Ordenar por puntuación</option>
+          <option value="vel">Ordenar por alcance/día</option>
+          <option value="reach">Ordenar por alcance</option>
+          <option value="days">Ordenar por días (más nuevos)</option>
+        </select>
+        <button class="btn primary" id="btn-add">Añadir producto</button>
+      </div>
+
+      <div id="form-wrap" class="panel" style="background:var(--bg)" hidden>
+        <h3 id="form-title">Nuevo producto</h3>
+        <form class="grid" id="pform" autocomplete="off">
+          <label class="wide">Nombre del producto<input type="text" id="p-name" required placeholder="Vestido midi de punto"></label>
+          <label>País<select id="p-country"></select></label>
+          <label>Fecha de inicio del anuncio<input type="date" id="p-start" required><span class="hint">Aparece en la biblioteca: “En circulación desde…”</span></label>
+          <label>Alcance UE<input type="number" id="p-reach" min="0" step="1" placeholder="85000"><span class="hint">Alcance total en la UE del anuncio</span></label>
+          <label>Anuncios activos<input type="number" id="p-ads" min="0" step="1" placeholder="30"><span class="hint">Anuncios activos de la tienda/producto</span></label>
+          <label>Productos en la tienda<input type="number" id="p-store" min="0" step="1" placeholder="300"></label>
+          <label>Ranking en PPSpy<input type="number" id="p-rank" min="1" step="1" placeholder="20"><span class="hint">Posición del producto dentro de la tienda</span></label>
+          <label>Palabra clave usada<input type="text" id="p-kw" placeholder="50% korting"></label>
+          <label>URL de la tienda<input type="url" id="p-store-url" placeholder="https://…"></label>
+          <label>URL del anuncio<input type="url" id="p-ad-url" placeholder="https://www.facebook.com/ads/library/?id=…"></label>
+          <label class="wide" style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="p-active" checked style="width:auto"> Sigue activo en la biblioteca de anuncios</label>
+          <label class="wide">Notas<textarea id="p-notes" rows="2" placeholder="Ángulo del anuncio, precio, proveedor…"></textarea></label>
+          <div class="preview" id="p-preview">Rellena fecha, alcance y anuncios para ver el veredicto.</div>
+          <div class="form-actions">
+            <button type="submit" class="btn primary" id="p-save">Guardar producto</button>
+            <button type="button" class="btn" id="p-cancel">Cancelar</button>
+            <span class="status-line" id="p-status"></span>
+          </div>
+        </form>
+      </div>
+
+      <div class="list" id="list"></div>
+      <p class="status-line" id="db-status">Conectando con la base de datos…</p>
+    </div>
+
+    <!-- BUSCADOR -->
+    <div id="pane-buscador" class="tabpane" style="display:grid;gap:14px" hidden>
+      <div class="toolbar">
+        <div class="chips" id="b-country"></div>
+        <span class="spacer"></span>
+        <label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" id="b-exact"> Frase exacta</label>
+      </div>
+      <p class="note" id="b-info" style="margin:0"></p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="text" id="b-custom" placeholder="Prueba tu propia palabra clave (p. ej. lo que usa un competidor)" style="flex:1;min-width:200px">
+        <a class="btn primary" id="b-custom-go" href="#" target="_blank" rel="noopener" style="text-decoration:none">Buscar</a>
+      </div>
+      <div id="b-list" style="display:grid;gap:16px"></div>
+      <div class="toolbar"><span class="status-line" id="b-progress"></span><span class="spacer"></span><button class="btn small ghost" id="b-reset">Desmarcar este país</button></div>
+    </div>
+
+    <!-- REGLAS -->
+    <div id="pane-reglas" class="tabpane" style="display:grid;gap:14px" hidden>
+      <div class="rules">
+        <div class="panel" style="background:var(--bg)">
+          <h3>Búsqueda estándar · 7 a 30 días</h3>
+          <table class="rule-tbl">
+            <tr><th>Condición</th><th>Mínimo</th></tr>
+            <tr><td>Anuncios activos</td><td>25</td></tr>
+            <tr><td>7 días o más</td><td>50k alcance</td></tr>
+            <tr><td>14 días o más</td><td>100k alcance</td></tr>
+            <tr><td>21 días o más</td><td>200k alcance</td></tr>
+            <tr><td>Días activo</td><td>máx. 30</td></tr>
+          </table>
+          <p class="note" style="margin:0">Ganador si cumple todo. Vigilar si falla una sola condición.</p>
+        </div>
+        <div class="panel" style="background:var(--bg)">
+          <h3>Activo poco tiempo · menos de 7 días</h3>
+          <table class="rule-tbl">
+            <tr><th>Condición</th><th>Mínimo</th></tr>
+            <tr><td>Productos en la tienda</td><td>150</td></tr>
+            <tr><td>Ranking PPSpy</td><td>top 15%</td></tr>
+            <tr><td>Activo en la biblioteca</td><td>sí</td></tr>
+          </table>
+          <p class="note" style="margin:0">Ejemplo: tienda con 300 productos, el producto debe estar en el top 45.</p>
+        </div>
+        <div class="panel" style="background:var(--bg)">
+          <h3>Alcance opcional para productos nuevos</h3>
+          <table class="rule-tbl">
+            <tr><th>Días activo</th><th>Alcance</th></tr>
+            <tr><td>3 días</td><td>15k</td></tr>
+            <tr><td>4 días</td><td>20k</td></tr>
+            <tr><td>5 días</td><td>30k</td></tr>
+            <tr><td>6 días</td><td>40k</td></tr>
+            <tr><td>7 días</td><td>50k</td></tr>
+          </table>
+          <p class="note" style="margin:0">Suma puntos a la puntuación, pero no bloquea el veredicto.</p>
+        </div>
+      </div>
+      <div class="panel" style="background:var(--bg)">
+        <h3>Cómo se calcula la puntuación (0–100)</h3>
+        <p class="note" style="margin:0;max-width:75ch">Cada condición aporta según lo lejos que llega respecto a su mínimo, con un tope de 1,5 veces el mínimo. El alcance pesa el doble porque es la señal más fiable de que el anuncio vende. Un producto con más de 30 días activo se marca como descartado: ya está saturado. Todos los países de la lista están en el hemisferio norte, así que comparten temporada.</p>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+/* ---------- datos de búsqueda ---------- */
+const COUNTRIES = [
+  {cc:"NL", name:"Países Bajos", lang:"neerlandés", cities:["amsterdam.nl","amsterdam.nl/products/","rotterdam.nl","utrecht.nl"],
+   kw:{ends:"uitverkoop eindigt binnenkort",off:"50% korting",ship:"gratis verzending",limited:"tijdelijke uitverkoop",extra:"60 dagen"},
+   items:{dress:"jurk",coat:"jas",knit:"trui",boots:"laarzen",set:"set"}},
+  {cc:"IT", name:"Italia", lang:"italiano", cities:["milano.com","milano.it","milano.com/products/","roma.it"],
+   kw:{ends:"i saldi finiscono presto",off:"50% di sconto",ship:"spedizione gratuita",limited:"saldi a tempo limitato",extra:"60 giorni"},
+   items:{dress:"vestito",coat:"cappotto",knit:"maglione",boots:"stivali",set:"completo"}},
+  {cc:"SE", name:"Suecia", lang:"sueco", cities:["stockholm.se","stockholm.com","stockholm.se/products/","goteborg.se"],
+   kw:{ends:"rean slutar snart",off:"50% rabatt",ship:"fri frakt",limited:"tidsbegränsad rea",extra:"60 dagar"},
+   items:{dress:"klänning",coat:"kappa",knit:"stickad tröja",boots:"stövlar",set:"set"}},
+  {cc:"FI", name:"Finlandia", lang:"finés", cities:["helsinki.fi","helsinki.com","helsinki.fi/products/","tampere.fi"],
+   kw:{ends:"ale päättyy pian",off:"50% alennus",ship:"ilmainen toimitus",limited:"rajoitetun ajan ale",extra:"60 päivää"},
+   items:{dress:"mekko",coat:"takki",knit:"neule",boots:"saappaat",set:"setti"}},
+  {cc:"DE", name:"Alemania", lang:"alemán", cities:["berlin.de","berlin.com","berlin.de/products/","muenchen.de"],
+   kw:{ends:"Sale endet bald",off:"50% Rabatt",ship:"kostenloser Versand",limited:"zeitlich begrenzter Sale",extra:"60 Tage"},
+   items:{dress:"Kleid",coat:"Mantel",knit:"Pullover",boots:"Stiefel",set:"Set"}},
+  {cc:"AT", name:"Austria", lang:"alemán", cities:["wien.at","wien.com","wien.at/products/","salzburg.at"],
+   kw:{ends:"Sale endet bald",off:"50% Rabatt",ship:"gratis Versand",limited:"nur für kurze Zeit",extra:"60 Tage"},
+   items:{dress:"Kleid",coat:"Mantel",knit:"Pullover",boots:"Stiefel",set:"Set"}},
+  {cc:"ES", name:"España", lang:"español", cities:["madrid.es","madrid.com","madrid.es/products/","barcelona.es"],
+   kw:{ends:"las rebajas terminan pronto",off:"50% de descuento",ship:"envío gratis",limited:"rebajas por tiempo limitado",extra:"60 días"},
+   items:{dress:"vestido",coat:"abrigo",knit:"jersey",boots:"botas",set:"conjunto"}},
+  {cc:"FR", name:"Francia", lang:"francés", cities:["paris.fr","paris.com","paris.fr/products/","lyon.fr"],
+   kw:{ends:"les soldes se terminent bientôt",off:"50% de réduction",ship:"livraison gratuite",limited:"soldes à durée limitée",extra:"60 jours"},
+   items:{dress:"robe",coat:"manteau",knit:"pull",boots:"bottes",set:"ensemble"}},
+];
+const KW_LABEL = {ends:"Las rebajas terminan pronto",off:"50% de descuento",ship:"Envío gratis",limited:"Rebajas por tiempo limitado",extra:"Garantía 60 días"};
+const ITEM_LABEL = {dress:"vestido",coat:"abrigo",knit:"jersey de punto",boots:"botas",set:"conjunto"};
+const CC = Object.fromEntries(COUNTRIES.map(c => [c.cc, c]));
+
+function adLibUrl(cc, q, exact){
+  return "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=" + cc +
+    "&is_targeted_country=false&media_type=all&q=" + encodeURIComponent(q) +
+    "&search_type=" + (exact ? "keyword_exact_phrase" : "keyword_unordered") +
+    "&sort_data[direction]=desc&sort_data[mode]=total_impressions";
+}
+function keywordsFor(c){
+  const out = [];
+  for (const k of Object.keys(c.kw)) out.push({cat:KW_LABEL[k], q:c.kw[k], group:"Palabras clave"});
+  for (const k of Object.keys(c.items)) out.push({cat:ITEM_LABEL[k] + " + 50%", q:c.items[k] + " 50%", group:"Prenda + descuento (temporada otoño-invierno)"});
+  out.push({cat:"vestido + envío gratis", q:c.items.dress + " " + c.kw.ship, group:"Prenda + descuento (temporada otoño-invierno)"});
+  for (const city of c.cities) out.push({cat:"dominio de ciudad", q:city, group:"Dominios de ciudad"});
+  return out;
+}
+
+/* ---------- reglas ---------- */
+const SHORT_REACH = {3:15000,4:20000,5:30000,6:40000,7:50000};
+function reachMin(d){
+  if (d < 3) return null;
+  if (d < 7) return SHORT_REACH[d];
+  if (d < 14) return 50000;
+  if (d < 21) return 100000;
+  return 200000;
+}
+function todayStr(){ const t = new Date(); return t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0"); }
+function daysSince(s){
+  if (!s) return null;
+  const [y,m,d] = s.split("-").map(Number); const a = Date.UTC(y,m-1,d);
+  const t = new Date(); const b = Date.UTC(t.getFullYear(),t.getMonth(),t.getDate());
+  return Math.max(0, Math.round((b-a)/86400000));
+}
+const num = v => (v === "" || v === null || v === undefined || isNaN(+v)) ? null : +v;
+function fmtK(n){ if (n === null || n === undefined) return "—"; if (n >= 1e6) return (n/1e6).toFixed(n>=1e7?0:1).replace(".",",")+"M"; if (n >= 1000) return Math.round(n/1000)+"k"; return String(Math.round(n)); }
+
+function evaluate(p){
+  const days = daysSince(p.startDate);
+  const reach = num(p.reach), ads = num(p.activeAds), store = num(p.storeProducts), rank = num(p.ppspyRank);
+  const checks = []; // {label, state:'ok'|'no'|'na', ratio, weight, required}
+  const add = (label, val, min, weight, required, inverse) => {
+    if (val === null) { checks.push({label: label + ": sin dato", state:"na", ratio:0, weight, required}); return; }
+    const ratio = inverse ? (val <= 0 ? 0 : min / val) : (min ? val / min : 1);
+    checks.push({label, state: ratio >= 1 ? "ok" : "no", ratio: Math.min(ratio, 1.5), weight, required});
+  };
+  let mode;
+  if (days === null) mode = "sin fecha";
+  else if (days > 30) {
+    mode = "saturado";
+    checks.push({label:"Más de 30 días activo", state:"no", ratio:0, weight:1, required:true});
+  } else if (days >= 7) {
+    mode = "estándar";
+    const rm = reachMin(days);
+    add("Alcance ≥ " + fmtK(rm), reach, rm, 2, true);
+    add("Anuncios activos ≥ 25", ads, 25, 1, true);
+  } else {
+    mode = "poco tiempo";
+    add("Tienda ≥ 150 productos", store, 150, 1, true);
+    if (store !== null && rank !== null) {
+      const top = Math.ceil(store * 0.15);
+      add("Top 15% PPSpy (≤ " + top + ")", rank, top, 1, true, true);
+    } else checks.push({label:"Top 15% PPSpy: sin dato", state:"na", ratio:0, weight:1, required:true});
+    checks.push({label:"Activo en biblioteca", state: p.active === false ? "no" : "ok", ratio: p.active === false ? 0 : 1, weight:1, required:true});
+    const rm = reachMin(days);
+    if (rm) add("Alcance opcional ≥ " + fmtK(rm), reach, rm, 1, false);
+  }
+  if (p.active === false && mode !== "poco tiempo") checks.push({label:"Ya no está activo", state:"no", ratio:0, weight:1, required:true});
+  const req = checks.filter(c => c.required);
+  const fails = req.filter(c => c.state === "no").length;
+  const missing = req.filter(c => c.state === "na").length;
+  let verdict;
+  if (mode === "sin fecha") verdict = "vigilar";
+  else if (mode === "saturado" || p.active === false && mode !== "poco tiempo") verdict = "descartar";
+  else if (fails === 0 && missing === 0) verdict = "ganador";
+  else if (fails + missing <= 1) verdict = "vigilar";
+  else verdict = "descartar";
+  const wsum = checks.reduce((s,c) => s + c.weight, 0) || 1;
+  let score = Math.round(checks.reduce((s,c) => s + c.ratio * c.weight, 0) / wsum / 1.5 * 100);
+  if (verdict === "descartar") score = Math.min(score, 49);
+  const vel = (reach !== null && days) ? reach / days : null;
+  return {days, mode, checks, verdict, score, vel, reach};
+}
+
+/* ---------- estado ---------- */
+let products = [];   // [{id, ...data}]
+let doneSet = new Set();
+let db = null, canWrite = true;
+let fCountry = "ALL", bCountry = "NL";
+let editing = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : null;
+function toast(msg){ const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 2200); }
+function store(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+function load(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+
+/* temporada */
+(function(){
+  const m = new Date().getMonth();
+  const s = [11,0,1].includes(m) ? "invierno" : [2,3,4].includes(m) ? "primavera" : [5,6,7].includes(m) ? "verano" : "otoño";
+  const target = ["otoño","invierno"].includes(s) ? "abrigos, punto, botas, vestidos de manga larga" : "vestidos, conjuntos ligeros, sandalias, lino";
+  $("season").innerHTML = "Temporada: <b>" + s + "</b> en los 8 países · busca " + esc(target);
+})();
+
+/* ---------- pestañas ---------- */
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+function setTab(t){
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === t)));
+  document.querySelectorAll(".tabpane").forEach(p => p.hidden = p.id !== "pane-" + t);
+  store("rm-tab", t);
+}
+const hashTab = (location.hash || "").slice(1);
+setTab(["productos","buscador","reglas"].includes(hashTab) ? hashTab : (load("rm-tab") || "productos"));
+
+/* ---------- chips de país ---------- */
+function renderChips(el, value, withAll, onPick){
+  const opts = (withAll ? [{cc:"ALL", name:"Todos"}] : []).concat(COUNTRIES);
+  el.innerHTML = opts.map(c => `<button class="chip" aria-pressed="${c.cc === value}" data-cc="${c.cc}" title="${esc(c.name)}">${c.cc === "ALL" ? "Todos" : c.cc}</button>`).join("");
+  el.querySelectorAll(".chip").forEach(b => b.onclick = () => onPick(b.dataset.cc));
+}
+function pickFilter(cc){ fCountry = cc; renderChips($("f-country"), fCountry, true, pickFilter); render(); }
+function pickSearch(cc){ bCountry = cc; store("rm-bcc", cc); renderChips($("b-country"), bCountry, false, pickSearch); renderSearch(); }
+bCountry = CC[load("rm-bcc")] ? load("rm-bcc") : "NL";
+renderChips($("f-country"), fCountry, true, pickFilter);
+renderChips($("b-country"), bCountry, false, pickSearch);
+$("p-country").innerHTML = COUNTRIES.map(c => `<option value="${c.cc}">${c.cc} · ${esc(c.name)}</option>`).join("");
+$("f-verdict").onchange = render; $("f-sort").onchange = render;
+
+/* ---------- buscador ---------- */
+function slug(s){ let h = 0; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h.toString(36); }
+function checkId(cc, q){ return cc + "-" + slug(q); }
+function renderSearch(){
+  const c = CC[bCountry], exact = $("b-exact").checked;
+  $("b-info").textContent = c.name + " · palabras clave en " + c.lang + ". Cada enlace abre la biblioteca con anuncios activos, ordenados por impresiones. Revisa los primeros resultados y anota los productos que cumplan las reglas.";
+  const kws = keywordsFor(c);
+  const groups = [...new Set(kws.map(k => k.group))];
+  $("b-list").innerHTML = groups.map(g => `<div class="kw-sec"><span class="eyebrow">${esc(g)}</span><div class="kwgrid">` +
+    kws.filter(k => k.group === g).map(k => {
+      const id = checkId(c.cc, k.q), done = doneSet.has(id);
+      return `<div class="kw ${done ? "done" : ""}"><input type="checkbox" id="chk-${id}" data-id="${id}" ${done ? "checked" : ""} aria-label="Marcar como revisada">
+        <div style="min-width:0"><div class="q">${esc(k.q)}</div><div class="cat">${esc(k.cat)}</div></div>
+        <span class="kwbtns"><a class="btn small primary" style="text-decoration:none" href="${esc(adLibUrl(c.cc, k.q, exact))}" target="_blank" rel="noopener">Abrir</a>
+        <button class="btn small" data-copy="${esc(k.q)}">Copiar</button></span></div>`;
+    }).join("") + `</div></div>`).join("");
+  $("b-list").querySelectorAll("input[type=checkbox]").forEach(cb => cb.onchange = () => toggleDone(cb.dataset.id, cb.checked));
+  $("b-list").querySelectorAll("[data-copy]").forEach(b => b.onclick = () => copy(b.dataset.copy));
+  const n = kws.filter(k => doneSet.has(checkId(c.cc, k.q))).length;
+  $("b-progress").textContent = "Revisadas hoy en " + c.cc + ": " + n + " de " + kws.length;
+  updateCustom();
+}
+function updateCustom(){
+  const q = $("b-custom").value.trim();
+  $("b-custom-go").href = q ? adLibUrl(bCountry, q, $("b-exact").checked) : adLibUrl(bCountry, CC[bCountry].kw.off, $("b-exact").checked);
+}
+$("b-custom").oninput = updateCustom;
+$("b-exact").onchange = renderSearch;
+async function copy(t){
+  try { await navigator.clipboard.writeText(t); toast("Copiado: " + t); }
+  catch(e){ toast("No se pudo copiar. Selecciona el texto a mano."); }
+}
+async function toggleDone(id, on){
+  if (on) doneSet.add(id); else doneSet.delete(id);
+  renderSearch();
+  if (db && canWrite) {
+    try { const ref = db.doc("checks/" + id); on ? await ref.set({d: todayStr()}) : await ref.delete(); }
+    catch(e){ toast("No se pudo guardar la marca."); }
+  }
+}
+$("b-reset").onclick = async () => {
+  const ids = keywordsFor(CC[bCountry]).map(k => checkId(bCountry, k.q)).filter(id => doneSet.has(id));
+  for (const id of ids) { doneSet.delete(id); if (db && canWrite) { try { await db.doc("checks/" + id).delete(); } catch(e){} } }
+  renderSearch();
+};
+
+/* ---------- gráfico ---------- */
+function renderChart(rows){
+  const svg = $("chart"), W = 760, H = 300, L = 56, R = 16, T = 14, B = 34;
+  const maxR = Math.max(300000, ...rows.map(r => r.ev.reach || 0)) * 1.08;
+  const x = d => L + (Math.min(d, 31) / 31) * (W - L - R);
+  const y = v => H - B - (v / maxR) * (H - T - B);
+  const css = n => `var(--${n})`;
+  let s = "";
+  const ticks = []; const step = maxR > 800000 ? 250000 : maxR > 400000 ? 100000 : 50000;
+  for (let v = 0; v <= maxR; v += step) ticks.push(v);
+  for (const v of ticks) s += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="${css("line")}" stroke-width="1"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${fmtK(v)}</text>`;
+  for (const d of [0,3,7,14,21,30]) s += `<text x="${x(d)}" y="${H-B+18}" text-anchor="middle">${d}d</text>`;
+  s += `<text x="${W-R}" y="${H-4}" text-anchor="end">días activo</text>`;
+  // zona ganadora + escalones
+  const pts = [[3,15000],[4,15000],[4,20000],[5,20000],[5,30000],[6,30000],[6,40000],[7,40000],[7,50000],[14,50000],[14,100000],[21,100000],[21,200000],[30,200000]];
+  const line = pts.map(([d,v]) => x(d)+","+y(v)).join(" ");
+  s += `<polygon points="${x(3)},${y(maxR)} ${line} ${x(30)},${y(maxR)}" fill="${css("win-soft")}" opacity=".7"/>`;
+  s += `<rect x="${x(30)}" y="${T}" width="${W-R-x(30)}" height="${H-T-B}" fill="${css("bad-soft")}" opacity=".6"/>`;
+  s += `<text x="${(x(30)+W-R)/2}" y="${T+14}" text-anchor="middle">+30d</text>`;
+  s += `<polyline points="${line}" fill="none" stroke="${css("win")}" stroke-width="2"/>`;
+  s += `<line x1="${L}" x2="${L}" y1="${T}" y2="${H-B}" stroke="${css("muted")}" stroke-width="1"/><line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="${css("muted")}" stroke-width="1"/>`;
+  const col = {ganador:"win", vigilar:"warn", descartar:"bad"};
+  for (const r of rows) {
+    if (r.ev.days === null || r.ev.reach === null) continue;
+    s += `<circle class="pt" data-id="${esc(r.id)}" cx="${x(r.ev.days)}" cy="${y(r.ev.reach)}" r="6.5" fill="${css(col[r.ev.verdict])}" stroke="${css("surface")}" stroke-width="2"><title>${esc(r.name)} · ${r.ev.days} días · ${fmtK(r.ev.reach)} alcance</title></circle>`;
+  }
+  if (!rows.some(r => r.ev.reach !== null && r.ev.days !== null)) s += `<text x="${(L+W-R)/2}" y="${H/2}" text-anchor="middle">Los productos que añadas aparecerán aquí</text>`;
+  svg.innerHTML = s;
+  svg.querySelectorAll(".pt").forEach(c => c.onclick = () => { const el = document.getElementById("card-" + c.dataset.id); if (el) { setTab("productos"); el.scrollIntoView({behavior:"smooth", block:"center"}); } });
+}
+
+/* ---------- lista ---------- */
+function render(){
+  const rows = products.map(p => ({...p, ev: evaluate(p)}));
+  $("s-total").textContent = rows.length;
+  $("s-win").textContent = rows.filter(r => r.ev.verdict === "ganador").length;
+  $("s-warn").textContent = rows.filter(r => r.ev.verdict === "vigilar").length;
+  $("s-bad").textContent = rows.filter(r => r.ev.verdict === "descartar").length;
+  renderChart(fCountry === "ALL" ? rows : rows.filter(r => r.country === fCountry));
+  let list = rows.filter(r => (fCountry === "ALL" || r.country === fCountry) && ($("f-verdict").value === "all" || r.ev.verdict === $("f-verdict").value));
+  const sort = $("f-sort").value;
+  const key = {score: r => r.ev.score, vel: r => r.ev.vel ?? -1, reach: r => r.ev.reach ?? -1, days: r => -(r.ev.days ?? 999)}[sort];
+  list.sort((a,b) => key(b) - key(a));
+  if (!list.length) {
+    $("list").innerHTML = products.length
+      ? `<div class="empty"><b>Ningún producto con este filtro</b><span class="muted">Cambia el país o el veredicto.</span></div>`
+      : `<div class="empty"><b>Aún no hay productos</b><span class="muted">Abre el buscador, encuentra un anuncio de moda que te guste y pulsa “Añadir producto”. El veredicto se calcula al momento.</span></div>`;
+    return;
+  }
+  $("list").innerHTML = list.map(r => {
+    const ev = r.ev, c = CC[r.country];
+    const verdictTxt = {ganador:"Ganador", vigilar:"Vigilar", descartar:"Descartar"}[ev.verdict];
+    const store = safeUrl(r.storeUrl), ad = safeUrl(r.adUrl);
+    const nextMin = ev.days !== null && ev.days < 30 ? nextThreshold(ev.days) : null;
+    const proj = (nextMin && ev.vel) ? Math.round((ev.reach || 0) + ev.vel * (nextMin.d - ev.days)) : null;
+    return `<article class="card ${ev.verdict}" id="card-${esc(r.id)}"><div class="stripe"></div><div class="body">
+      <div class="row1"><span class="name">${esc(r.name || "Sin nombre")}</span>
+        <span class="pill ${ev.verdict}">${verdictTxt}</span><span class="pill cc">${esc(r.country)}${c ? " · " + esc(c.name) : ""}</span>
+        ${r.example ? `<span class="pill ex">Ejemplo</span>` : ""}
+        <span class="score">${ev.score}<small>/100</small></span></div>
+      <div class="metrics">
+        <div class="metric"><span class="k">Días activo</span><span class="v">${ev.days ?? "—"}</span></div>
+        <div class="metric"><span class="k">Alcance UE</span><span class="v">${fmtK(ev.reach)}</span></div>
+        <div class="metric"><span class="k">Alcance/día</span><span class="v">${ev.vel ? fmtK(ev.vel) : "—"}</span></div>
+        <div class="metric"><span class="k">Anuncios activos</span><span class="v">${num(r.activeAds) ?? "—"}</span></div>
+        <div class="metric"><span class="k">Tienda · PPSpy</span><span class="v">${num(r.storeProducts) ?? "—"} · #${num(r.ppspyRank) ?? "—"}</span></div>
+        <div class="metric"><span class="k">Modo</span><span class="v" style="font-family:var(--f-body)">${esc(ev.mode)}</span></div>
+      </div>
+      <div class="checks">${ev.checks.map(k => `<span class="check ${k.state}">${k.state === "ok" ? "✓" : k.state === "no" ? "✕" : "?"} ${esc(k.label)}</span>`).join("")}</div>
+      ${proj !== null ? `<div class="note">Al ritmo actual llegará a <b class="num">${fmtK(proj)}</b> el día ${nextMin.d} (mínimo ${fmtK(nextMin.v)}): ${proj >= nextMin.v ? "va en camino." : "se quedará corto."}</div>` : ""}
+      ${r.notes ? `<div class="notes">${esc(r.notes)}</div>` : ""}
+      <div class="actions">
+        ${ad ? `<a class="btn small" href="${esc(ad)}" target="_blank" rel="noopener" style="text-decoration:none">Ver anuncio</a>` : ""}
+        ${store ? `<a class="btn small" href="${esc(store)}" target="_blank" rel="noopener" style="text-decoration:none">Ver tienda</a>` : ""}
+        ${r.keyword ? `<span class="status-line">Palabra clave: <span class="mono">${esc(r.keyword)}</span></span>` : ""}
+        <span class="spacer"></span>
+        ${canWrite ? `<button class="btn small" data-edit="${esc(r.id)}">Actualizar métricas</button>
+        <button class="btn small ghost" data-del="${esc(r.id)}">Eliminar</button>` : ""}
+      </div>
+      ${r.history && r.history.length > 1 ? `<div class="status-line">Historial: ${r.history.slice(-5).map(h => esc(h.d.slice(5)) + " " + fmtK(h.reach)).join(" → ")}</div>` : ""}
+    </div></article>`;
+  }).join("");
+  $("list").querySelectorAll("[data-edit]").forEach(b => b.onclick = () => openForm(b.dataset.edit));
+  $("list").querySelectorAll("[data-del]").forEach(b => b.onclick = () => askDelete(b));
+}
+function nextThreshold(d){
+  for (const t of [7,14,21]) if (d < t) return {d:t, v:reachMin(t)};
+  return {d:30, v:200000};
+}
+async function askDelete(btn){
+  if (btn.dataset.armed) {
+    const id = btn.dataset.del;
+    try { await db.doc("products/" + id).delete(); toast("Producto eliminado"); }
+    catch(e){ toast("No se pudo eliminar."); }
+    return;
+  }
+  btn.dataset.armed = "1"; btn.textContent = "¿Eliminar? Pulsa otra vez";
+  setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = "Eliminar"; } }, 3000);
+}
+
+/* ---------- formulario ---------- */
+const F = ["name","country","start","reach","ads","store","rank","kw","store-url","ad-url","notes"];
+function formData(){
+  return {
+    name:$("p-name").value.trim(), country:$("p-country").value, startDate:$("p-start").value,
+    reach:num($("p-reach").value), activeAds:num($("p-ads").value), storeProducts:num($("p-store").value), ppspyRank:num($("p-rank").value),
+    keyword:$("p-kw").value.trim(), storeUrl:$("p-store-url").value.trim(), adUrl:$("p-ad-url").value.trim(),
+    notes:$("p-notes").value.trim(), active:$("p-active").checked
+  };
+}
+function openForm(id){
+  editing = id || null;
+  const p = id ? products.find(x => x.id === id) : null;
+  $("form-title").textContent = p ? "Actualizar: " + (p.name || "") : "Nuevo producto";
+  $("p-name").value = p?.name || ""; $("p-country").value = p?.country || (fCountry !== "ALL" ? fCountry : bCountry);
+  $("p-start").value = p?.startDate || ""; $("p-reach").value = p?.reach ?? ""; $("p-ads").value = p?.activeAds ?? "";
+  $("p-store").value = p?.storeProducts ?? ""; $("p-rank").value = p?.ppspyRank ?? ""; $("p-kw").value = p?.keyword || "";
+  $("p-store-url").value = p?.storeUrl || ""; $("p-ad-url").value = p?.adUrl || ""; $("p-notes").value = p?.notes || "";
+  $("p-active").checked = p ? p.active !== false : true;
+  $("p-status").textContent = "";
+  $("form-wrap").hidden = false; preview(); $("p-name").focus();
+}
+function preview(){
+  const ev = evaluate(formData());
+  if (ev.days === null) { $("p-preview").textContent = "Rellena la fecha de inicio para ver el veredicto."; return; }
+  const v = {ganador:"Ganador", vigilar:"Vigilar", descartar:"Descartar"}[ev.verdict];
+  $("p-preview").innerHTML = `<b>${v}</b> · ${ev.days} días (${esc(ev.mode)}) · puntuación <b class="num">${ev.score}</b> — ` +
+    ev.checks.map(k => (k.state === "ok" ? "✓ " : k.state === "no" ? "✕ " : "? ") + esc(k.label)).join(" · ");
+}
+$("pform").addEventListener("input", preview);
+$("btn-add").onclick = () => openForm(null);
+$("p-cancel").onclick = () => { $("form-wrap").hidden = true; editing = null; };
+$("pform").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!db) { $("p-status").textContent = "Sin conexión con la base de datos: inicia sesión en claude.ai para guardar."; return; }
+  const d = formData();
+  const prev = editing ? products.find(x => x.id === editing) : null;
+  const history = (prev?.history ? [...prev.history] : []);
+  if (d.reach !== null) {
+    const t = todayStr();
+    const last = history[history.length - 1];
+    if (last && last.d === t) history[history.length - 1] = {d:t, reach:d.reach, ads:d.activeAds};
+    else history.push({d:t, reach:d.reach, ads:d.activeAds});
+  }
+  const body = {...d, history: history.slice(-30), updatedAt: new Date().toISOString(), createdAt: prev?.createdAt || new Date().toISOString(), example: false};
+  $("p-save").disabled = true; $("p-status").textContent = "Guardando…";
+  try {
+    await (editing ? db.doc("products/" + editing) : db.collection("products").doc()).set(body);
+    $("form-wrap").hidden = true; editing = null; toast("Producto guardado");
+  } catch(err){
+    if (err && err.code === "invalid_argument") { canWrite = false; $("p-status").textContent = "No tienes permiso para guardar en esta página."; }
+    else if (err && err.code === "quota_exceeded") $("p-status").textContent = "La base de datos está llena. Elimina productos descartados.";
+    else $("p-status").textContent = "No se pudo guardar. Inténtalo de nuevo.";
+  } finally { $("p-save").disabled = false; }
+});
+
+/* ---------- conexión ---------- */
+render(); renderSearch();
+(async () => {
+  const cl = window.claude;
+  if (!cl || !cl.use) { $("db-status").textContent = "Abre esta página en claude.ai para guardar productos."; $("btn-add").disabled = true; return; }
+  const [d, u] = await Promise.all([cl.use("db"), cl.use("user")]);
+  db = d;
+  if (!db) { $("db-status").textContent = "Inicia sesión en claude.ai para ver y guardar productos."; $("btn-add").disabled = true; return; }
+  try { const w = u ? await u.can("data.write") : null; if (w === false) { canWrite = false; $("btn-add").hidden = true; } } catch(e){}
+  db.collection("products").onSnapshot(snap => {
+    products = snap.docs.map(s => ({id: s.id, ...s.data()}));
+    $("db-status").textContent = "Sincronizado · " + products.length + " productos · los cambios aparecen en directo";
+    render();
+  }, () => { $("db-status").textContent = "Se perdió la conexión con la base de datos. Recarga la página."; });
+  db.collection("checks").onSnapshot(snap => {
+    const t = todayStr();
+    doneSet = new Set(snap.docs.filter(s => s.data().d === t).map(s => s.id));
+    renderSearch();
+  }, () => {});
+})();
+})();
+</script>
